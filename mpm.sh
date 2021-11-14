@@ -54,8 +54,8 @@ fi
 if [ "$1" = "-h" ]; then
   echo "Usage: mpm.sh [options] [howto]"
   echo "Options:"
-  echo " -br [reponame] Install the package from Homebrew"
-  echo " -dl      Download the latest database from Github"
+  echo " -br [package] Install the package from Homebrew"
+  echo " -a       Add new repo"
   echo " -h       Show this help"
   echo " -i       Install the howto"
   echo " -l       List the howtos"
@@ -64,7 +64,7 @@ if [ "$1" = "-h" ]; then
   echo " -v       Show the version"
   echo " -x       Remove the built package"
   echo " -c       Clear the howtos"
-  echo " -lo [path to howto]   Install local howto"
+  echo " -lo [path to mpkg]   Install local mpkg"
 fi
 # make the mpm.pkgs file with touch and if not exist, create it
 if [ ! -f /etc/mpm.pkgs ]; then
@@ -77,143 +77,64 @@ fi
 if [ "$1" = "-i" ]; then
   echo "$2" >> /etc/mpm.pkgs
 fi
-# on the first run, ask the user to add a repo to mpm.conf
-# and check if the repo is valid and if it is, add it to the mpm.conf
-if [ ! -f /etc/mpm.conf ]; then
-  echo "Do you want to add a repo to mpm.conf? (y/n)"
-  read add_repo
-    if [ "$add_repo" = "y" ]; then
-    echo "Enter the repo name:"
-    read repo_name
-    echo "Enter the repo url:"
-    read repo_url
-    echo "Enter the repo branch:"
-    read repo_branch
-    echo "Enter the repo type:"
-    read repo_type
-    echo "Enter the repo priority:"
-    read repo_priority
-    echo "Enter the repo description:"
-    read repo_description
-    # add repo name, url, branch, type, priority and description to mpm.conf
-    echo "repo_name = ${repo_name}" >> /etc/mpm.conf
-    echo "repo_url = ${repo_url}" >> /etc/mpm.conf
-    echo "repo_branch = ${repo_branch}" >> /etc/mpm.conf
-    echo "repo_type = ${repo_type}" >> /etc/mpm.conf
-    echo "repo_priority = ${repo_priority}" >> /etc/mpm.conf
-    echo "repo_description = ${repo_description}" >> /etc/mpm.conf
-    fi
+# if user inputs -a parameter, then add second source to the mpm.conf file
+if [ "$1" = "-a" ]; then
+  echo "Adding $2 to the mpm.conf file"
+  echo "$2" >> /etc/mpm.conf
 fi
-
-
-# if user input -i parameter, download the howto from MatuusOS Github
-if [ "$1" = "-i" ]; then
-  echo "Downloading the howto..."
-  wget -q -O /MatuusOS/howto/$2.howto https://raw.githubusercontent.com/MatuusOS/howto/master/$2.howto
-  echo "Download complete"
-# when the howto is downmloaded, read the .howto file and ask user if he wants to edit it
-  echo "Do you want to edit the howto? (y/n)"
-  read edit_howto
-    if [ "$edit_howto" = "y" ]; then
-     nano /MatuusOS/howto/$2.howto
-    fi
-fi
-
-# also check for name, version and heavily-depends-on in the howto
-
-if [ "$1" = "-i" ]; then
-  echo "Checking the howto..."
-  howto_name=$2
-  howto_path=/MatuusOS/howto/${howto_name}.howto
-  howto_content=$(cat ${howto_path})
-  howto_name=$(echo ${howto_content} | grep name)
-  howto_name_content=$(echo ${howto_name} | cut -d'{' -f2 | cut -d'}' -f1)
-  howto_version=$(echo ${howto_content} | grep version)
-  howto_version_content=$(echo ${howto_version} | cut -d'{' -f2 | cut -d'}' -f1)
-  howto_depends=$(echo ${howto_content} | grep heavily-depends-on)
-  howto_depends_content=$(echo ${howto_depends} | cut -d'{' -f2 | cut -d'}' -f1)
-
-# then find prepare{} in the howto and trigger it
-
-if [ "$1" = "-i" ]; then
-  echo "Preparing the howto..."
-  howto_name=$2
-  howto_path=/MatuusOS/howto/${howto_name}.howto
-  howto_content=$(cat ${howto_path})
-  howto_prepare=$(echo ${howto_content} | grep prepare)
-  howto_prepare_content=$(echo ${howto_prepare} | cut -d'{' -f2 | cut -d'}' -f1)
-  # if there is a prepare{} in the howto, run the prepare{}
-  if [ "$howto_prepare_content" != "" ]; then
-    echo "Preparing the howto..."
-    howto_prepare_content=$(echo ${howto_prepare_content} | sed -e 's/ /\n/g')
-    howto_prepare_content_array=(${howto_prepare_content})
-    for howto_prepare_content_array_element in ${howto_prepare_content_array[*]}
-    do
-      echo "Running ${howto_prepare_content_array_element}..."
-      ${howto_prepare_content_array_element}
-    done
-  fi
-fi
-
-# then trigger the build{} in the howto
-
-if [ "$1" = "-i" ]; then
-  echo "Building the howto..."
-  howto_name=$2
-  howto_path=/MatuusOS/howto/${howto_name}.howto
-  howto_content=$(cat ${howto_path})
-  howto_build=$(echo ${howto_content} | grep build)
-  howto_build_content=$(echo ${howto_build} | cut -d'{' -f2 | cut -d'}' -f1)
-  # if there is a build{} in the howto, run the build{}
-  if [ "$howto_build_content" != "" ]; then
-    echo "Building the howto..."
-    howto_build_content=$(echo ${howto_build_content} | sed -e 's/ /\n/g')
-    howto_build_content_array=(${howto_build_content})
-    for howto_build_content_array_element in ${howto_build_content_array[*]}
-    do
-      echo "Running ${howto_build_content_array_element}..."
-      ${howto_build_content_array_element}
-    done
-  fi
-fi
-
-# run the install{} in the howto
-
-if [ "$1" = "-i" ]; then
-  echo "Installing the howto..."
-  howto_name=$2
-  howto_path=/MatuusOS/howto/${howto_name}.howto
-  howto_content=$(cat ${howto_path})
-  howto_install=$(echo ${howto_content} | grep install)
-  howto_install_content=$(echo ${howto_install} | cut -d'{' -f2 | cut -d'}' -f1)
-  # if there is a install{} in the howto, run the install{}
-  if [ "$howto_install_content" != "" ]; then
-    echo "Installing the howto..."
-    howto_install_content=$(echo ${howto_install_content} | sed -e 's/ /\n/g')
-    howto_install_content_array=(${howto_install_content})
-    for howto_install_content_array_element in ${howto_install_content_array[*]}
-    do
-      echo "Running ${howto_install_content_array_element}..."
-      ${howto_install_content_array_element}
-    done
-  fi
-fi
-
-# if user inputs -l parameter then show all downloaded howtos
-
-if [ "$1" = "-l" ]; then
-  echo "Showing all downloaded howtos..."
-  ls /MatuusOS/howto
-fi
-
-# if user inputs -c parameter then clear howtos from the /MatuusOS/howto directory
-
+# if user inputs -c parameter, then clear the .mpkg files
 if [ "$1" = "-c" ]; then
-  echo "Clearing all downloaded howtos..."
-  rm -rf /MatuusOS/howto/*
+  echo "Clearing the .mpkg files"
+  rm -rf /MatuusOS/mpkgs/*
 fi
 
-# if user inputs -s parameter, make a database of howtos that are on the urls that are in mpm.conf and then show what packages are available
-if [ "$1" = "-s" ]; then
-  echo "Showing all available howtos..."
-wget 
+# if user inputs the -i parameter, and then repo in format username/repo, then find .mpkg file and install it
+if [ "$1" = "-i" ]; then
+  # check if the repo is valid
+  if [ "$2" ]; then
+    echo "This repo is not valid"
+    exit
+  fi
+  # check if the repo is valid
+  if [ "$2"/"$3" ]; then
+  wget -q https://raw.githubusercontent.com/$2/$3/master/$3.mpkg -O /tmp/mpkg
+ # if there is not a .mpkg file, then find install.sh on repo
+  if [ ! -f /tmp/mpkg ]; then
+    wget -q https://raw.githubusercontent.com/$2/$3/master/install.sh -O /tmp/mpkg
+  fi
+  # if there is not a .mpkg file, then find install.sh on repo
+  if [ ! -f /tmp/mpkg ]; then
+    echo "This repo is not valid"
+    exit
+  fi
+  # if there is a .mpkg file, then install it
+  if [ -f /tmp/mpkg ]; then
+    echo "Installing $2/$3"
+    # extract the .mpkg file and then remove it
+    tar -xvf /tmp/mpkg -C /MatuusOS/mpkgs/
+    rm /tmp/mpkg
+    # if there is install.sh file, then run it
+    if [ -f /MatuusOS/mpkgs/$2/$3/install.sh ]; then
+      echo "Running the install.sh file"
+      chmod +x /MatuusOS/mpkgs/$2/$3/install.sh
+      /MatuusOS/mpkgs/$2/$3/install.sh
+      echo "Done installing $2/$3"
+    fi
+  fi
+  fi
+ # find name, version and source
+  name=$(cat /tmp/mpkg | grep name | cut -d '=' -f2)
+  version=$(cat /tmp/mpkg | grep version | cut -d '=' -f2)
+  source=$(cat /tmp/mpkg | grep source | cut -d '=' -f2)
+  # check if the package is already installed
+  if [ -f /MatuusOS/$name-$version.mpkg ]; then
+    echo "The package is already installed"
+    exit
+  else
+    # follow the instructions{} function in the mpkg file to install the package
+    instructions=$(cat /tmp/mpkg | grep instructions | cut -d '{' -f2 | cut -d '}' -f1)
+    eval $instructions
+    # write the name of howto that was successfully installed to the system to mpm.pkgs
+    echo "$name-$version" >> /etc/mpm.pkgs
+  fi
+  fi
