@@ -1,7 +1,7 @@
 # mpm
 a package manager for LFS and MatuusOS
 
-* How to install
+## How to install ##
  * clone this repo and just type <pre> sudo ./mpm </pre>
 
 ## Note that this package manager is still in alpha and some features may not work as expected. ##
