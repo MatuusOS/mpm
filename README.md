@@ -1,13 +1,13 @@
 # mpm
-a package manager purely written in Shell script. (fork of KISS package manager)
+a package manager for LFS and MatuusOS
 
 * How to install
- * clone this repo and just type sudo ./mpm.sh.
+ * clone this repo and just type <pre> sudo ./mpm </pre>.
 
 ## Note that this package manager is still in alpha and some features may not work as expected. ##
 # Usage #
 
-<pre> Usage: mpm.sh [options] [howto]
+<pre> mpm.sh [options] [howto]
   Options:
     -br      Install the package from Homebrew
     -a       Add new repo
