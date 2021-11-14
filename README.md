@@ -7,7 +7,7 @@ a package manager for LFS and MatuusOS
 ## Note that this package manager is still in alpha and some features may not work as expected. ##
 # Usage #
 
-<pre> mpm.sh [options] [howto]
+<pre> mpm [options] [mpkg]
   Options:
     -br      Install the package from Homebrew
     -a       Add new repo
